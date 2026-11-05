@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disk Scheduling Simulator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    color: #222;
+}
+
+header {
+    background: #182848;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+header h1 {
+    margin: 0;
+}
+
+.container {
+    max-width: 950px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px #0001;
+}
+
+h2 {
+    color: #182848;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+button {
+    padding: 12px 22px;
+    background: #182848;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-top: 15px;
+    margin-right: 8px;
+}
+
+button:hover {
+    background: #31528c;
+}
+
+.result {
+    display: none;
+}
+
+.result-box {
+    background: #edf4ff;
+    padding: 15px;
+    margin: 12px 0;
+    border-left: 5px solid #31528c;
+    border-radius: 5px;
+    overflow-wrap: anywhere;
+}
+
+.highlight {
+    color: #087c49;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+canvas {
+    width: 100%;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+footer {
+    text-align: center;
+    background: #182848;
+    color: white;
+    padding: 18px;
+    margin-top: 30px;
+}
+
+.organizers {
+    margin: 18px auto 0;
+    padding: 12px;
+    max-width: 400px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid #ffffff55;
+    border-radius: 10px;
+}
+
+.organizers span {
+    font-size: 13px;
+    color: #00ffcc;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.organizers h2 {
+    color: #ffffff;
+    margin: 8px 0 0;
+    font-size: 23px;
+    letter-spacing: 2px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+	
+    <h1>Disk Scheduling Simulator</h1>
+    <p>SCAN & C-SCAN Algorithm Visualization</p>
+
+    <div class="organizers">
+        <span>Organized By</span>
+        <h2>RUTVRAJ & DEVARSH</h2>
+    </div>
+
+</header>
+
+<div class="container">
+
+<div class="card">
+    <h2>Enter Disk Details</h2>
+
+    <div class="input-grid">
+
+        <div>
+            <label>Disk Requests</label>
+            <input type="text" id="requests"
+            value="98, 183, 37, 122, 14, 124, 65, 67">
+        </div>
+
+        <div>
+            <label>Initial Head Position</label>
+            <input type="number" id="head"
+            value="53" min="0">
+        </div>
+
+        <div>
+            <label>Disk Size (0 to N-1)</label>
+            <input type="number" id="diskSize"
+            value="200" min="1">
+        </div>
+
+        <div>
+            <label>Initial Direction</label>
+            <select id="direction">
+                <option value="right">Right (Higher)</option>
+                <option value="left">Left (Lower)</option>
+            </select>
+        </div>
+
+    </div>
+
+    <button onclick="runAlgorithm('SCAN')">
+        Run SCAN
+    </button>
+
+    <button onclick="runAlgorithm('CSCAN')">
+        Run C-SCAN
+    </button>
+
+    <button onclick="resetPage()">
+        Reset
+    </button>
+</div>
+
+<div class="card result" id="result">
+    <h2 id="algorithmTitle">Algorithm Result</h2>
+
+    <div class="result-box">
+        <b>Seek Sequence:</b>
+        <p id="sequence"></p>
+    </div>
+
+    <div class="result-box">
+        <b>Total Head Movement:</b>
+        <p class="highlight" id="movement"></p>
+    </div>
+
+    <div class="result-box">
+        <b>Number of Requests:</b>
+        <p id="requestCount"></p>
+    </div>
+
+    <div class="result-box">
+        <b>Head Movement Details:</b>
+        <p id="details"></p>
+    </div>
+</div>
+
+<div class="card result" id="chartCard">
+    <h2>Disk Head Movement Graph</h2>
+    <canvas id="chart" width="850" height="350"></canvas>
+</div>
+
+<div class="card">
+    <h2>About Algorithms</h2>
+
+    <h3>1. SCAN Algorithm</h3>
+    <p>
+    The SCAN algorithm moves the disk head in one direction,
+    servicing all requests along the way. It reaches the end
+    of the disk and then reverses direction.
+    </p>
+
+    <h3>2. C-SCAN Algorithm</h3>
+    <p>
+    The C-SCAN algorithm services requests in one direction.
+    After reaching the disk boundary, the head returns to the
+    opposite boundary without servicing requests during the
+    return trip. It then continues servicing requests.
+    </p>
+</div>
+
+</div>
+
+<footer>
+    Disk Scheduling Simulator | SCAN & C-SCAN
+</footer>
+
+<script>
+
+function runAlgorithm(type) {
+
+    const requestText =
+        document.getElementById("requests").value;
+
+    const requests = requestText
+        .split(",")
+        .map(x => Number(x.trim()));
+
+    const head = Number(
+        document.getElementById("head").value
+    );
+
+    const diskSize = Number(
+        document.getElementById("diskSize").value
+    );
+
+    const direction =
+        document.getElementById("direction").value;
+
+    if (
+        requestText.trim() === "" ||
+        requests.some(x => !Number.isInteger(x)) ||
+        !Number.isInteger(head) ||
+        !Number.isInteger(diskSize) ||
+        diskSize <= 0 ||
+        head < 0 ||
+        head >= diskSize ||
+        requests.some(x => x < 0 || x >= diskSize)
+    ) {
+        alert("Please enter valid disk requests and positions!");
+        return;
+    }
+
+    if (requests.length === 0) {
+        alert("Enter at least one disk request.");
+        return;
+    }
+
+    const sorted = [...requests].sort((a, b) => a - b);
+
+    let left = sorted.filter(x => x < head);
+    let right = sorted.filter(x => x >= head);
+
+    let sequence = [head];
+
+    if (type === "SCAN") {
+
+        if (direction === "right") {
+
+            sequence.push(...right);
+
+            if (sequence[sequence.length - 1] !== diskSize - 1) {
+                sequence.push(diskSize - 1);
+            }
+
+            sequence.push(...left.reverse());
+
+        } else {
+
+            sequence.push(...left.reverse());
+
+            if (sequence[sequence.length - 1] !== 0) {
+                sequence.push(0);
+            }
+
+            sequence.push(...right);
+        }
+
+    } else if (type === "CSCAN") {
+
+        if (direction === "right") {
+
+            sequence.push(...right);
+
+            if (sequence[sequence.length - 1] !== diskSize - 1) {
+                sequence.push(diskSize - 1);
+            }
+
+            sequence.push(0);
+            sequence.push(...left);
+
+        } else {
+
+            sequence.push(...left.reverse());
+
+            if (sequence[sequence.length - 1] !== 0) {
+                sequence.push(0);
+            }
+
+            sequence.push(diskSize - 1);
+            sequence.push(...right.reverse());
+        }
+    }
+
+    let totalMovement = 0;
+    let details = [];
+
+    for (let i = 1; i < sequence.length; i++) {
+
+        let movement = Math.abs(
+            sequence[i] - sequence[i - 1]
+        );
+
+        totalMovement += movement;
+
+        details.push(
+            sequence[i - 1] + " → " +
+            sequence[i] + " = " + movement
+        );
+    }
+
+    document.getElementById("result").style.display = "block";
+    document.getElementById("chartCard").style.display = "block";
+
+    document.getElementById("algorithmTitle").innerText =
+        type === "SCAN" ? "SCAN Algorithm Result" :
+        "C-SCAN Algorithm Result";
+
+    document.getElementById("sequence").innerText =
+        sequence.join(" → ");
+
+    document.getElementById("movement").innerText =
+        totalMovement + " cylinders";
+
+    document.getElementById("requestCount").innerText =
+        requests.length;
+
+    document.getElementById("details").innerText =
+        details.join(" | ");
+
+    drawChart(sequence, diskSize);
+}
+
+function drawChart(sequence, diskSize) {
+
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const padding = 55;
+
+    const x = i =>
+        padding + i * (w - 2 * padding) /
+        Math.max(1, sequence.length - 1);
+
+    const y = value =>
+        h - padding - value * (h - 2 * padding) /
+        Math.max(1, diskSize - 1);
+
+    // Grid
+    ctx.strokeStyle = "#ddd";
+    ctx.fillStyle = "#333";
+    ctx.font = "12px Arial";
+
+    for (let i = 0; i <= 4; i++) {
+
+        let value = Math.round(
+            (diskSize - 1) * i / 4
+        );
+
+        let py = y(value);
+
+        ctx.beginPath();
+        ctx.moveTo(padding, py);
+        ctx.lineTo(w - padding, py);
+        ctx.stroke();
+
+        ctx.fillText(value, 10, py + 4);
+    }
+
+    // Movement line
+    ctx.strokeStyle = "#087cdb";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    sequence.forEach((value, i) => {
+
+        if (i === 0) {
+            ctx.moveTo(x(i), y(value));
+        } else {
+            ctx.lineTo(x(i), y(value));
+        }
+
+    });
+
+    ctx.stroke();
+
+    // Points
+    sequence.forEach((value, i) => {
+
+        ctx.fillStyle = "#e63946";
+
+        ctx.beginPath();
+        ctx.arc(x(i), y(value), 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#222";
+        ctx.fillText(value, x(i) - 10, y(value) - 12);
+
+        ctx.fillText(i, x(i) - 3, h - 15);
+    });
+
+    ctx.fillStyle = "#182848";
+    ctx.font = "bold 15px Arial";
+    ctx.fillText("Request Order", w / 2 - 50, h - 2);
+}
+
+function resetPage() {
+
+    document.getElementById("requests").value =
+        "98, 183, 37, 122, 14, 124, 65, 67";
+
+    document.getElementById("head").value = 53;
+    document.getElementById("diskSize").value = 200;
+    document.getElementById("direction").value = "right";
+
+    document.getElementById("result").style.display = "none";
+    document.getElementById("chartCard").style.display = "none";
+}
+
+</script>
+
+</body>
+</html>
